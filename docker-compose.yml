@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    ports:
+      - ${GAMA_DATABASE_PORT:-5432}:5432
+    environment:
+      POSTGRES_USER: ${GAMA_DATABASE_USER}
+      POSTGRES_PASSWORD: ${GAMA_DATABASE_PASSWORD}
+      POSTGRES_DB: ${GAMA_DATABASE_NAME}
+    volumes:
+      - db:/var/lib/postgresql/data
+
+volumes:
+  db:
+    driver: local
