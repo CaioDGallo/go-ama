@@ -1,8 +1,8 @@
-# Go GAMA Application
+# Go - GAMA Application
 
 ![GoLang + React + Vite](docs/assets/image-3.png)
 
-![License](https://img.shields.io/github/license/CaioDGallo/react-ama)
+![License](https://img.shields.io/github/license/CaioDGallo/go-ama)
 
 Welcome to the GoLang Go-AMA (Ask Me Anything) application! This project is built using GoLang, React, and Vite, providing a fast and modern development experience.
 
