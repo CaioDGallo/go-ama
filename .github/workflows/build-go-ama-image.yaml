@@ -1,0 +1,36 @@
+name: Build and Deploy GAMA
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build Docker Image
+        run: docker build -t caiogallo2401/go-ama .
+      - name: Push Image to Docker Hub
+        run: docker push caiogallo2401/go-ama:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@master
+        with:
+          host: ${{secrets.SSH_HOST_AWS}}
+          key: ${{secrets.SSH_KEY}}
+          username: ${{secrets.SSH_USERNAME_AWS}}
+
+          script: |
+            cd /var/www/go-ama/
+            docker pull caiogallo2401/go-ama:latest
+            docker rm -f go-ama-service  
+            docker run -d -p 8080:8080 --name go-ama-service caiogallo2401/go-ama:latest
+            exit
