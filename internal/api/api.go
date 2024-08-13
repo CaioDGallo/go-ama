@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"os"
 	"sync"
+	"time"
 
 	"github.com/CaioDGallo/go-ama/internal/store/pgstore"
 	"github.com/go-chi/chi/v5"
@@ -13,6 +15,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/streadway/amqp"
 )
 
 type apiHandler struct {
@@ -80,6 +83,15 @@ const (
 	MessageKindMessageReactionDecrease = "message_reaction_decreased"
 )
 
+const (
+	QueueCollectUserDataName = "collect_user_data"
+)
+
+const (
+	CollectedUserDataActionCreateRoom    = "create_room"
+	CollectedUserDataActionCreateMessage = "create_message"
+)
+
 type MessageMessageCreated struct {
 	ID      string `json:"id"`
 	Message string `json:"message"`
@@ -103,6 +115,81 @@ type Message struct {
 	Kind   string `json:"kind"`
 	Value  any    `json:"value"`
 	RoomID string `json:"-"`
+}
+
+type UserDataMessage struct {
+	IP               string `json:"ip"`
+	Location         string `json:"location"`
+	Device           string `json:"device"`
+	UserAgent        string `json:"user_agent"`
+	Action           string `json:"action"`
+	JSONResponseBody string `json:"response_body"`
+	Referrer         string `json:"referrer"`
+	RequestMethod    string `json:"request_method"`
+	RequestPath      string `json:"request_path"`
+	Timestamp        string `json:"timestamp"`
+}
+
+func (h apiHandler) publishMessage(actionType string, queueName string, jsonResponseBody string, r *http.Request) (bool, error) {
+	rabbitMQURL := os.Getenv("RABBITMQ_URL")
+
+	conn, err := amqp.Dial(rabbitMQURL)
+	if err != nil {
+		slog.Error("Failed to connect to RabbitMQ", "error", err)
+		return false, err
+	}
+	defer conn.Close()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		slog.Error("Failed to open a channel", "error", err)
+		return false, err
+	}
+	defer ch.Close()
+
+	q, err := ch.QueueDeclare(
+		queueName, // name
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
+	)
+	if err != nil {
+		slog.Error("Failed to declare a queue", "error", err)
+		return false, err
+	}
+
+	userData := UserDataMessage{
+		IP:               r.RemoteAddr,
+		Location:         r.Header.Get("Location"),
+		Device:           r.Header.Get("Device"),
+		UserAgent:        r.Header.Get("User-Agent"),
+		Action:           actionType,
+		JSONResponseBody: jsonResponseBody,
+		Referrer:         r.Referer(),
+		RequestMethod:    r.Method,
+		RequestPath:      r.URL.Path,
+		Timestamp:        time.Now().Format(time.RFC3339),
+	}
+
+	messageBody, _ := json.Marshal(userData)
+
+	err = ch.Publish(
+		"",     // exchange
+		q.Name, // routing key
+		false,  // mandatory
+		false,  // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        messageBody,
+		})
+	if err != nil {
+		slog.Error("Failed to publish a message", "error", err)
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (h apiHandler) notifyClients(msg Message) {
@@ -157,6 +244,14 @@ func (h apiHandler) handleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, _ := json.Marshal(response{ID: roomID.String()})
+
+	go func() {
+		ok, err := h.publishMessage(CollectedUserDataActionCreateRoom, QueueCollectUserDataName, string(data), r)
+		if !ok {
+			slog.Error("Failed to publish message", "error", err)
+		}
+	}()
+
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(data)
 }
@@ -181,6 +276,7 @@ func (h apiHandler) handleGetRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, _ := json.Marshal(response{ID: room.ID, Theme: room.Theme})
+
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(data)
 }
@@ -214,6 +310,14 @@ func (h apiHandler) handleCreateRoomMessage(w http.ResponseWriter, r *http.Reque
 	}
 
 	data, _ := json.Marshal(response{ID: messageID.String()})
+
+	go func() {
+		ok, err := h.publishMessage(CollectedUserDataActionCreateMessage, QueueCollectUserDataName, string(data), r)
+		if !ok {
+			slog.Error("Failed to publish message", "error", err)
+		}
+	}()
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	_, _ = w.Write(data)
