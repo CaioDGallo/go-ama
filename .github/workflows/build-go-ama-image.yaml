@@ -30,7 +30,8 @@ jobs:
 
           script: |
             cd /var/www/go-ama/
-            docker pull caiogallo2401/go-ama:latest
-            docker rm -f go-ama-service  
-            docker run -d -p 8080:8080 --name go-ama-service caiogallo2401/go-ama:latest
+            docker pull caiogallo2401/go-ama-queue:latest
+            docker compose down --remove-orphans
+            docker compose build --no-cache
+            docker compose up --build -d
             exit
