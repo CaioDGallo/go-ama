@@ -11,6 +11,17 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
 
+  gama:
+    container_name: gama
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+
 volumes:
   db:
     driver: local

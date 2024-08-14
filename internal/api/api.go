@@ -130,6 +130,11 @@ type UserDataMessage struct {
 	Timestamp        string `json:"timestamp"`
 }
 
+type QueueMessage struct {
+	Payload UserDataMessage `json:"payload"`
+	ID      uuid.UUID       `json:"id"`
+}
+
 func (h apiHandler) publishMessage(actionType string, queueName string, jsonResponseBody string, r *http.Request) (bool, error) {
 	rabbitMQURL := os.Getenv("RABBITMQ_URL")
 
@@ -173,7 +178,12 @@ func (h apiHandler) publishMessage(actionType string, queueName string, jsonResp
 		Timestamp:        time.Now().Format(time.RFC3339),
 	}
 
-	messageBody, _ := json.Marshal(userData)
+	queueMessage := QueueMessage{
+		Payload: userData,
+		ID:      uuid.New(),
+	}
+
+	messageBody, _ := json.Marshal(queueMessage)
 
 	err = ch.Publish(
 		"",     // exchange
