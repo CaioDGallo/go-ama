@@ -30,6 +30,8 @@ jobs:
 
           script: |
             cd /var/www/go-ama/
+            git checkout main
+            git pull origin main
             docker pull caiogallo2401/go-ama-queue:latest
             docker compose down --remove-orphans
             docker compose build --no-cache
