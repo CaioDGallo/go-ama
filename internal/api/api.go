@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/streadway/amqp"
 )
 
@@ -49,6 +50,8 @@ func NewHandler(q *pgstore.Queries) http.Handler {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+
+	r.Handle("/metrics", promhttp.Handler())
 
 	r.Get("/subscribe/{room_id}", a.handleSubscribe)
 
