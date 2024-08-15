@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:latest
+    container_name: gama-db
     restart: unless-stopped
     ports:
       - ${GAMA_DATABASE_PORT:-5432}:5432
@@ -10,6 +11,15 @@ services:
       POSTGRES_DB: ${GAMA_DATABASE_NAME}
     volumes:
       - db:/var/lib/postgresql/data
+
+  gama-postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    ports:
+      - 9187:9187
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${GAMA_DATABASE_USER}:${GAMA_DATABASE_PASSWORD}@${GAMA_DATABASE_HOST}:5432/${GAMA_DATABASE_NAME}?sslmode=disable"
+    links:
+      - db
 
   gama:
     container_name: gama
