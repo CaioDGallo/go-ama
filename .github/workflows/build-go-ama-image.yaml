@@ -32,7 +32,7 @@ jobs:
             cd /var/www/go-ama/
             git checkout main
             git pull origin main
-            docker pull caiogallo2401/go-ama-queue:latest
+            docker pull caiogallo2401/go-ama:latest
             docker compose down --remove-orphans
             docker compose -f docker-compose.production.yml build --no-cache
             docker compose -f docker-compose.production.yml up --build -d
