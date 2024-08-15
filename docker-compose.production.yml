@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    ports:
+      - ${GAMA_DATABASE_PORT:-5432}:5432
+    environment:
+      POSTGRES_USER: ${GAMA_DATABASE_USER}
+      POSTGRES_PASSWORD: ${GAMA_DATABASE_PASSWORD}
+      POSTGRES_DB: ${GAMA_DATABASE_NAME}
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  gama:
+    container_name: gama
+    image: caiogallo2401/go-ama:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  db:
+    driver: local

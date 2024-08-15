@@ -34,6 +34,6 @@ jobs:
             git pull origin main
             docker pull caiogallo2401/go-ama-queue:latest
             docker compose down --remove-orphans
-            docker compose build --no-cache
-            docker compose up --build -d
+            docker compose -f docker-compose.production.yml build --no-cache
+            docker compose -f docker-compose.production.yml up --build -d
             exit
