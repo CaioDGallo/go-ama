@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/github/license/CaioDGallo/go-ama)
 
-Welcome to the GoLang Go-AMA (Ask Me Anything) application! This project is built using GoLang, React, and Vite, providing a fast and modern development experience.
+Welcome to the GoLang Go-AMA (Ask Me Anything) application! This project is built using GoLang (React and Vite on the frontend).
 
 ## Table of Contents
 
@@ -64,4 +64,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ---
 
-Thank you for checking out the React GAMA application! If you have any questions or need further assistance, feel free to reach out.
+Thank you for checking out the GAMA application! If you have any questions or need further assistance, feel free to reach out.
