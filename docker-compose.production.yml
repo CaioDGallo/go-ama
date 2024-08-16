@@ -11,6 +11,11 @@ services:
       POSTGRES_DB: ${GAMA_DATABASE_NAME}
     volumes:
       - db:/var/lib/postgresql/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
 
   gama-postgres-exporter:
     image: prometheuscommunity/postgres-exporter
@@ -28,6 +33,11 @@ services:
       - "8080:8080"
     depends_on:
       - db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
 
 volumes:
   db:
