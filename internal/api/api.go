@@ -156,12 +156,12 @@ func (h apiHandler) publishMessage(actionType string, queueName string, jsonResp
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		queueName, // name
-		true,      // durable
-		false,     // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		nil,       // arguments
+		queueName,
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 	if err != nil {
 		slog.Error("Failed to declare a queue", "error", err)
@@ -189,10 +189,10 @@ func (h apiHandler) publishMessage(actionType string, queueName string, jsonResp
 	messageBody, _ := json.Marshal(queueMessage)
 
 	err = ch.Publish(
-		"",     // exchange
-		q.Name, // routing key
-		false,  // mandatory
-		false,  // immediate
+		"",
+		q.Name,
+		false,
+		false,
 		amqp.Publishing{
 			ContentType: "application/json",
 			Body:        messageBody,
